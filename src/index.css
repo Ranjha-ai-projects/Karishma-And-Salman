@@ -1,0 +1,269 @@
+@import "tailwindcss";
+
+@theme {
+  --font-cinzel: 'Cinzel', serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-script: 'Alex Brush', cursive;
+  --font-great-vibes: 'Great Vibes', cursive;
+  --font-monte-carlo: 'MonteCarlo', cursive;
+  --font-arabic: 'Amiri', serif;
+  --font-sans: 'Montserrat', sans-serif;
+
+  --color-royal-burgundy-950: #380714;
+  --color-royal-burgundy-900: #4a091a;
+  --color-royal-burgundy-800: #5e0d22;
+  --color-royal-burgundy-700: #74122d;
+  --color-royal-burgundy-600: #8b1837;
+
+  --color-royal-gold-light: #f3dfa2;
+  --color-royal-gold: #c69c57;
+  --color-royal-gold-dark: #9b7235;
+
+  --color-royal-cream: #fbf8f2;
+  --color-royal-cream-dark: #f2ebe0;
+}
+
+@layer base {
+  body {
+    background-color: #fbf8f2;
+    color: #4a2e2b;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* Custom Utilities for Royal Styling */
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+.font-script {
+  font-family: 'Alex Brush', cursive;
+}
+.font-great-vibes {
+  font-family: 'Great Vibes', cursive;
+}
+.font-monte-carlo {
+  font-family: 'MonteCarlo', cursive;
+}
+.font-arabic {
+  font-family: 'Amiri', serif;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #e7ca85 0%, #c4994f 50%, #f3dfa2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-shimmer {
+  background: linear-gradient(135deg, #cda756 0%, #ecd07a 35%, #ba8e3a 70%, #dfc06a 100%);
+}
+
+.card-shadow {
+  box-shadow: 0 10px 30px -10px rgba(90, 13, 32, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+.envelope-shadow {
+  box-shadow: 0 20px 45px -10px rgba(70, 9, 24, 0.28), 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Lantern glowing pulse */
+@keyframes lantern-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 12px rgba(245, 210, 120, 0.7)) drop-shadow(0 0 25px rgba(220, 160, 50, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(255, 230, 150, 0.9)) drop-shadow(0 0 35px rgba(240, 180, 70, 0.6));
+  }
+}
+
+.animate-lantern-glow {
+  animation: lantern-glow 3s ease-in-out infinite;
+}
+
+/* Sparkle Floating Animation */
+@keyframes float-particle {
+  0% {
+    transform: translateY(0px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px) rotate(360deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  animation: float-particle 5s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for Luxury Experience */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fbf8f2;
+}
+::-webkit-scrollbar-thumb {
+  background: #c69c57;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #74122d;
+}
+
+/* =========================================================================
+   ROYAL REVEAL · CINEMATIC ENVELOPE OPENING OVERLAY
+   ========================================================================= */
+.envelope-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: radial-gradient(ellipse at center, #faf2e8 0%, #f2e8de 65%, #e9d9ca 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  will-change: opacity;
+}
+
+.envelope-overlay::before {
+  content: "";
+  position: absolute;
+  inset: clamp(15px, 2.6vw, 34px);
+  border: 1px solid rgba(181, 141, 91, 0.2);
+  pointer-events: none;
+}
+
+.header-note {
+  position: absolute;
+  top: clamp(40px, 8vh, 90px);
+  letter-spacing: .32em;
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+  color: #936f54;
+  font-size: clamp(9px, 1vw, 12px);
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hint {
+  position: absolute;
+  bottom: clamp(65px, 11vh, 115px);
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #8b674f;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hint:before {
+  content: '';
+  width: 1px;
+  height: 26px;
+  background: #b59572;
+  display: block;
+}
+
+.envelope-scene {
+  position: relative;
+  width: min(74vw, 440px, 54svh);
+  aspect-ratio: 652 / 641;
+  filter: drop-shadow(0 24px 23px rgba(60, 24, 41, 0.22));
+  transform-origin: 50% 50%;
+  transform: perspective(1200px) translateZ(0);
+  will-change: transform, opacity;
+  z-index: 2;
+  backface-visibility: hidden;
+  user-select: none;
+}
+
+.envelope-cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.emblem-btn {
+  position: absolute;
+  left: 50%;
+  top: 50.5%;
+  width: 28%;
+  height: 28%;
+  border: 0;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  outline: none;
+  z-index: 10;
+}
+
+.emblem-btn:focus-visible {
+  outline: 2px solid #fce0a5;
+  outline-offset: 5px;
+}
+
+.emblem-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 236, 198, 0.35);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(255, 230, 165, 0);
+  animation: softPulse 2.6s ease-in-out infinite;
+}
+
+.emblem-spark {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: conic-gradient(from 30deg, transparent 0deg, transparent 75deg, rgba(255, 241, 192, 0.55) 103deg, transparent 125deg, transparent 360deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.emblem-btn:hover .emblem-spark,
+.emblem-btn:focus-visible .emblem-spark {
+  opacity: 1;
+  animation: rotateSpark 2.4s linear infinite;
+}
+
+@keyframes softPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 230, 165, 0.25); }
+  50% { box-shadow: 0 0 0 11px rgba(255, 230, 165, 0); }
+}
+
+@keyframes rotateSpark {
+  to { transform: rotate(360deg); }
+}
+

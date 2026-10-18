@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldFloral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff4df" />
+      <stop offset="40%" stop-color="#eed8b2" />
+      <stop offset="80%" stop-color="#c9a76d" />
+      <stop offset="100%" stop-color="#9a773d" />
+    </linearGradient>
+  </defs>
+  <g fill="url(#goldFloral)" opacity="0.92">
+    <!-- Damask Floral Petal Cluster -->
+    <path d="M 170 30 C 150 15, 120 20, 110 45 C 100 20, 70 15, 50 30 C 30 45, 35 75, 55 90 C 75 105, 100 130, 110 160 C 120 130, 145 105, 165 90 C 185 75, 190 45, 170 30 Z" />
+    <circle cx="110" cy="55" r="14" fill="#fffaf2" />
+    <circle cx="110" cy="55" r="8" fill="#a48045" />
+    <!-- Flourish branches -->
+    <path d="M 110 160 C 90 140, 50 145, 30 170 C 45 180, 80 170, 95 180" fill="none" stroke="url(#goldFloral)" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M 110 160 C 130 140, 170 145, 190 170 C 175 180, 140 170, 125 180" fill="none" stroke="url(#goldFloral)" stroke-width="2.5" stroke-linecap="round" />
+  </g>
+</svg>

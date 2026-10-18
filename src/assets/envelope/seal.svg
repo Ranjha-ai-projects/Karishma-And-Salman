@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="waxBase" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fff9ef" />
+      <stop offset="40%" stop-color="#f5ecdc" />
+      <stop offset="85%" stop-color="#e3d4bd" />
+      <stop offset="100%" stop-color="#cbb89d" />
+    </radialGradient>
+    <radialGradient id="waxBevel" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="transparent" />
+      <stop offset="90%" stop-color="#bba383" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#8c7554" stop-opacity="0.8" />
+    </radialGradient>
+    <filter id="sealShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#2a050d" flood-opacity="0.4" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+    <linearGradient id="goldMonogram" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a87f3b" />
+      <stop offset="50%" stop-color="#805b22" />
+      <stop offset="100%" stop-color="#614416" />
+    </linearGradient>
+  </defs>
+
+  <!-- Organic Wax Shape Outer Border -->
+  <path d="M 100 12 
+           C 125 10, 148 18, 165 35 
+           C 182 52, 190 75, 188 100 
+           C 186 128, 178 152, 158 170 
+           C 138 188, 115 190, 95 188 
+           C 68 186, 45 178, 30 160 
+           C 12 140, 10 115, 12 92 
+           C 15 65, 25 42, 45 28 
+           C 65 14, 82 13, 100 12 Z" 
+        fill="url(#waxBase)" 
+        filter="url(#sealShadow)" />
+
+  <path d="M 100 12 
+           C 125 10, 148 18, 165 35 
+           C 182 52, 190 75, 188 100 
+           C 186 128, 178 152, 158 170 
+           C 138 188, 115 190, 95 188 
+           C 68 186, 45 178, 30 160 
+           C 12 140, 10 115, 12 92 
+           C 15 65, 25 42, 45 28 
+           C 65 14, 82 13, 100 12 Z" 
+        fill="url(#waxBevel)" />
+
+  <!-- Inner Recessed Circle -->
+  <circle cx="100" cy="100" r="68" fill="#eedec7" stroke="#cbb495" stroke-width="1.5" />
+  <circle cx="100" cy="100" r="64" fill="none" stroke="#ba9d7a" stroke-width="1" stroke-dasharray="2 2" opacity="0.7" />
+  
+  <!-- Subtle Embossed Inner Border -->
+  <circle cx="100" cy="100" r="58" fill="none" stroke="#9e805c" stroke-width="0.75" opacity="0.6" />
+
+  <!-- Star Accents on Ring -->
+  <path d="M 100 37 L 102 41 L 106 41 L 103 44 L 104 48 L 100 45 L 96 48 L 97 44 L 94 41 L 98 41 Z" fill="#9e805c" opacity="0.8" />
+  <path d="M 100 155 L 102 159 L 106 159 L 103 162 L 104 166 L 100 163 L 96 166 L 97 162 L 94 159 L 98 159 Z" fill="#9e805c" opacity="0.8" />
+
+  <!-- "EA" Monogram Typography -->
+  <g fill="url(#goldMonogram)" transform="translate(100, 100)">
+    <!-- Letter E -->
+    <text x="-26" y="16" font-family="'Cinzel', 'Playfair Display', serif" font-size="44" font-weight="600" letter-spacing="-2" opacity="0.95">E</text>
+    <!-- Letter A overlapping -->
+    <text x="-3" y="16" font-family="'Cinzel', 'Playfair Display', serif" font-size="44" font-weight="600" letter-spacing="-2" opacity="0.95">A</text>
+  </g>
+</svg>
