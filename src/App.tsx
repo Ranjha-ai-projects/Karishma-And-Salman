@@ -21,6 +21,12 @@ export function App() {
   // Dev mode flag for testing replay if needed: e.g. ?dev=true or ?replay=true
   const [isDevMode, setIsDevMode] = useState(false);
 
+  // Dynamic couple names for envelope personalization
+  const brideFirstName = invitationData.bride.name.trim().split(/\s+/)[0] || 'Karishma';
+  const groomFirstName = invitationData.groom.name.trim().split(/\s+/)[0] || 'Salman';
+  const envelopeHeading = `${brideFirstName.toUpperCase()} & ${groomFirstName.toUpperCase()} ARE GETTING MARRIED`;
+  const sealMonogram = `${brideFirstName.charAt(0).toUpperCase()}${groomFirstName.charAt(0).toUpperCase()}`;
+
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const emblemRef = useRef<HTMLButtonElement | null>(null);
@@ -270,9 +276,9 @@ export function App() {
             pointerEvents: isAnimating ? 'none' : 'auto',
           }}
         >
-          {/* Top Header Note */}
-          <div ref={headerNoteRef} className="header-note">
-            A Royal Wedding Invitation
+          {/* Top Header Note (Dynamic Couple Names) */}
+          <div ref={headerNoteRef} className="header-note font-cinzel tracking-[0.24em] sm:tracking-[0.28em] text-[#8e6e53] text-[11px] sm:text-xs font-semibold px-4">
+            {envelopeHeading}
           </div>
 
           {/* 3D Perspective Scene Container */}
@@ -289,16 +295,45 @@ export function App() {
               draggable={false}
             />
 
-            {/* Circular Interactive Emblem with Pulse & Rotating Spark */}
+            {/* Circular Interactive Emblem with Dynamic Wax Seal Medallion */}
             <button
               ref={emblemRef}
               type="button"
-              className="emblem-btn"
+              className="emblem-btn group"
               onClick={handleOpenEnvelope}
-              aria-label="Enter the wedding invitation"
+              aria-label={`Open wedding invitation for ${brideFirstName} and ${groomFirstName}`}
               disabled={isAnimating}
             >
+              {/* Rotating sparkle aura */}
               <span className="emblem-spark" aria-hidden="true" />
+
+              {/* Dynamic Embossed Wax Medallion (Cleanly covers underlying 'EA' monogram with 'KS') */}
+              <div 
+                className="relative w-[78%] h-[78%] rounded-full flex items-center justify-center pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+                style={{
+                  background: 'radial-gradient(circle at 35% 35%, #f7ecd9 0%, #ebd6bb 45%, #cfad83 80%, #b89163 100%)',
+                  boxShadow: 'inset 0 2px 4px rgba(70, 25, 10, 0.35), inset 0 -1px 2px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.18)',
+                  border: '1px solid rgba(168, 125, 68, 0.5)',
+                }}
+              >
+                {/* Concentric ornamental gold border ring */}
+                <div className="absolute inset-[3px] rounded-full border border-[#a0743b]/35 pointer-events-none" />
+
+                {/* Delicate fleur accent dots */}
+                <div className="absolute top-[3px] text-[7px] text-[#91672e] leading-none select-none">✦</div>
+                <div className="absolute bottom-[3px] text-[7px] text-[#91672e] leading-none select-none">✦</div>
+
+                {/* Dynamic Monogram Initials (e.g. KS) */}
+                <span 
+                  className="font-cinzel text-base sm:text-lg font-bold tracking-tight select-none leading-none pt-0.5"
+                  style={{
+                    color: '#80531a',
+                    textShadow: '0 1px 1px rgba(255, 255, 255, 0.75), 0 -1px 1px rgba(60, 25, 8, 0.4)',
+                  }}
+                >
+                  {sealMonogram}
+                </span>
+              </div>
             </button>
           </div>
 
