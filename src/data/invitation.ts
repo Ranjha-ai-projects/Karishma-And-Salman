@@ -3,35 +3,16 @@ export interface EventScheduleItem {
   time: string;
 }
 
-export interface EventTheme {
-  primaryColor: string;
-  secondaryColor: string;
-  panelBg: string;
-  cardBorder: string;
-  buttonBg: string;
-  buttonHoverBg: string;
-  buttonText: string;
-  buttonBorder: string;
-  tagBg: string;
-  tagText: string;
-  archStroke: string;
-  iconBorder: string;
-  iconBg: string;
-}
-
 export interface WeddingEvent {
   id: string;
   tag: string; // e.g. "CEREMONY 1"
   title: string; // e.g. "Haldi"
-  subtitle?: string; // Poetic subtitle
   icon: string; // path to icon
   image: string; // path to artwork image
   date: string; // e.g. "Thursday, 03 Dec 2026"
   time: string; // e.g. "04:00 PM onwards"
   venue: string; // e.g. "Nabipur, Sultanpur"
-  directionsUrl?: string; // map directions URL
-  gradientBg: string;
-  theme: EventTheme;
+  gradientBg: string; // e.g. "from-[#fcf8ec] to-[#f9f2dd]"
   schedule?: EventScheduleItem[];
 }
 
@@ -161,85 +142,34 @@ export const invitationData: InvitationData = {
       id: "haldi",
       tag: "CEREMONY 1",
       title: "Haldi",
-      subtitle: "An auspicious morning bathed in love, laughter, and golden marigolds.",
       icon: "/assets/flower-haldi-transparent.png",
       image: "/assets/haldi.png",
       date: "Thursday, 03 Dec 2026",
       time: "04:00 PM onwards",
       venue: "Nabipur, Sultanpur",
-      directionsUrl: "https://maps.google.com/?q=Nabipur+Sultanpur+Uttar+Pradesh",
-      gradientBg: "from-[#fffcf5] via-[#faf4e4] to-[#f4e8cb]",
-      theme: {
-        primaryColor: "#91600e",
-        secondaryColor: "#7e5309",
-        panelBg: "bg-gradient-to-b from-[#fffefc] via-[#fbf7ee] to-[#f6ecdb]",
-        cardBorder: "border-[#dfbd6c]/60 hover:border-[#dfbd6c]",
-        buttonBg: "bg-gradient-to-r from-[#d8a946] via-[#c69733] to-[#b88624]",
-        buttonHoverBg: "hover:from-[#c69733] hover:to-[#a7771a]",
-        buttonText: "text-[#2e1904]",
-        buttonBorder: "border-[#a37624]/60",
-        tagBg: "bg-[#faedce] border border-[#e5bf70]/60",
-        tagText: "text-[#87580b]",
-        archStroke: "#caa045",
-        iconBorder: "border-[#dfbd6c]",
-        iconBg: "bg-[#fdf8eb]"
-      }
+      gradientBg: "from-[#fbf5e6] via-[#f8eed1] to-[#f4e6bc]"
     },
     {
       id: "mehendi",
       tag: "CEREMONY 2",
       title: "Mehndi",
-      subtitle: "An evening of intricate henna patterns, folk songs, and timeless joy.",
       icon: "/assets/leaves-mehendi-transparent.png",
       image: "/assets/mehendi.png",
       date: "Friday, 04 Dec 2026",
       time: "08:00 PM onwards",
       venue: "Nabipur, Sultanpur",
-      directionsUrl: "https://maps.google.com/?q=Nabipur+Sultanpur+Uttar+Pradesh",
-      gradientBg: "from-[#f7fbf8] via-[#eef6f0] to-[#e0ede2]",
-      theme: {
-        primaryColor: "#1a5232",
-        secondaryColor: "#154529",
-        panelBg: "bg-gradient-to-b from-[#fdfefd] via-[#f4f8f5] to-[#e8efe9]",
-        cardBorder: "border-[#87b893]/60 hover:border-[#87b893]",
-        buttonBg: "bg-gradient-to-r from-[#1c5634] via-[#16472b] to-[#103821]",
-        buttonHoverBg: "hover:from-[#16472b] hover:to-[#0b2917]",
-        buttonText: "text-[#f3f9f4]",
-        buttonBorder: "border-[#2c774c]/70",
-        tagBg: "bg-[#e5f1e8] border border-[#9ac6a4]/60",
-        tagText: "text-[#1a5232]",
-        archStroke: "#528e65",
-        iconBorder: "border-[#87b893]",
-        iconBg: "bg-[#eef6f0]"
-      }
+      gradientBg: "from-[#eef5ee] via-[#e2eee1] to-[#d4e4d3]"
     },
     {
       id: "nikah",
       tag: "CEREMONY 3",
       title: "Nikah & Barat",
-      subtitle: "The sacred union of two hearts, heartfelt duas, and eternal vows under the stars.",
       icon: "/assets/lotus-nikah-transparent.png",
       image: "/assets/nikah.png",
       date: "Saturday, 05 Dec 2026",
       time: "Barat 7:00 PM onwards",
       venue: "Green Marriage Point, Nabipur Dihwa, Sultanpur",
-      directionsUrl: "https://maps.app.goo.gl/4AmvFfDbLiwj2pSJA",
-      gradientBg: "from-[#fffcfc] via-[#fcf3f2] to-[#f4e2e2]",
-      theme: {
-        primaryColor: "#6b1228",
-        secondaryColor: "#570d1e",
-        panelBg: "bg-gradient-to-b from-[#fffdfd] via-[#fbf3f3] to-[#f6e4e5]",
-        cardBorder: "border-[#c48191]/60 hover:border-[#c48191]",
-        buttonBg: "bg-gradient-to-r from-[#6b1228] via-[#5c0e21] to-[#470817]",
-        buttonHoverBg: "hover:from-[#5c0e21] hover:to-[#380410]",
-        buttonText: "text-[#fdf0f2]",
-        buttonBorder: "border-[#8a1c37]/70",
-        tagBg: "bg-[#fae6e9] border border-[#d897a4]/60",
-        tagText: "text-[#6b1228]",
-        archStroke: "#9d314a",
-        iconBorder: "border-[#c48191]",
-        iconBg: "bg-[#f9e8ea]"
-      },
+      gradientBg: "from-[#f0f4f9] via-[#e5eef7] to-[#d6e4f2]",
       schedule: [
         { label: "Barat", time: "7:00 PM" },
         { label: "Dinner", time: "8:00 PM" },
