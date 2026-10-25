@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ScratchRevealProps {
   onRevealed?: () => void;
   revealedContent: React.ReactNode;
-  threshold?: number; // percentage scratched to auto-reveal (0.42 = 42%)
+  threshold?: number; // percentage scratched to auto-reveal (0.40 = 40%)
   scratchPrompt?: string;
   scratchSubtext?: string;
 }
@@ -13,19 +13,19 @@ interface ScratchRevealProps {
 export const ScratchReveal: React.FC<ScratchRevealProps> = ({
   onRevealed,
   revealedContent,
-  threshold = 0.42,
+  threshold = 0.40,
   scratchPrompt = "✦ SCRATCH TO REVEAL ✦",
   scratchSubtext = "Scratch the gold to reveal our wedding dates"
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lastPosRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
   const isScratchingRef = useRef(false);
   const hasStartedScratchingRef = useRef(false);
-  const radiusRef = useRef(36);
   const animFrameRef = useRef<number | null>(null);
 
-  const [isFullyRevealed, setIsFullyRevealed] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [isCanvasRemoved, setIsCanvasRemoved] = useState(false);
   const [floatingHearts, setFloatingHearts] = useState<Array<{
     id: number;
     left: number;
@@ -36,12 +36,18 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     targetRotate: number;
   }>>([]);
 
-  // Draw gold foil texture on canvas
-  const drawGoldFoil = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, dpr: number) => {
-    ctx.save();
-    ctx.scale(dpr, dpr);
+  // Draw royal gold foil texture and embossed invitation text on canvas
+  const drawGoldFoil = useCallback((canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    // Rich golden metallic gradient
+    const width = canvas.width;
+    const height = canvas.height;
+    const scale = canvas.width / (canvas.clientWidth || 320);
+
+    ctx.save();
+
+    // Rich metallic gold gradient
     const grad = ctx.createLinearGradient(0, 0, width, height);
     grad.addColorStop(0, '#c79c4a');
     grad.addColorStop(0.2, '#ecd07a');
@@ -53,92 +59,87 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    // Add gold flecks / sparkles overlay
+    // Golden sparkles / foil specks overlay
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     for (let i = 0; i < 45; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
-      const r = Math.random() * 2 + 1;
+      const r = (Math.random() * 2 + 1) * scale;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Add subtle darker gold specks
+    // Subtle darker gold specks for depth
     ctx.fillStyle = 'rgba(120, 80, 20, 0.2)';
     for (let i = 0; i < 35; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
-      const r = Math.random() * 1.5 + 0.5;
+      const r = (Math.random() * 1.5 + 0.5) * scale;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Draw Gold Text & Heart Icon
+    // Concentric luxury border ring inside foil
+    ctx.strokeStyle = 'rgba(255, 245, 215, 0.45)';
+    ctx.lineWidth = 1.5 * scale;
+    ctx.strokeRect(8 * scale, 8 * scale, width - 16 * scale, height - 16 * scale);
+
+    // Embossed gold prompt text & heart
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Top prompt
-    ctx.font = 'bold 13px "Cinzel", Georgia, serif';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
-    ctx.fillText(scratchPrompt, width / 2, height / 2 - 12);
+    ctx.font = `bold ${Math.round(13 * scale)}px "Cinzel", Georgia, serif`;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 4 * scale;
+    ctx.shadowOffsetX = 1 * scale;
+    ctx.shadowOffsetY = 1 * scale;
+    ctx.fillText(scratchPrompt, width / 2, height / 2 - 12 * scale);
 
-    // Heart icon above text
-    ctx.font = '16px "Cormorant Garamond", Georgia, serif';
-    ctx.fillText('♡', width / 2, height / 2 - 32);
+    ctx.font = `${Math.round(16 * scale)}px "Cormorant Garamond", Georgia, serif`;
+    ctx.fillText('♡', width / 2, height / 2 - 32 * scale);
 
-    // Subtext
-    ctx.font = 'italic 12px "Cormorant Garamond", Georgia, serif';
+    ctx.font = `italic ${Math.round(12 * scale)}px "Cormorant Garamond", Georgia, serif`;
     ctx.fillStyle = '#fffdf5';
-    ctx.fillText(scratchSubtext, width / 2, height / 2 + 15);
+    ctx.fillText(scratchSubtext, width / 2, height / 2 + 15 * scale);
 
     ctx.restore();
   }, [scratchPrompt, scratchSubtext]);
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container || isFullyRevealed || hasStartedScratchingRef.current) return;
+    if (!canvas || isRevealed || hasStartedScratchingRef.current) return;
 
-    const rect = container.getBoundingClientRect();
-    const width = Math.max(280, rect.width || 320);
-    const height = Math.max(120, rect.height || 150);
+    const ratio = Math.min(window.devicePixelRatio || 1, 3);
+    const clientWidth = canvas.clientWidth || 320;
+    const clientHeight = canvas.clientHeight || 150;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
+    canvas.width = Math.round(clientWidth * ratio);
+    canvas.height = Math.round(clientHeight * ratio);
 
-    // Dynamic stroke radius based on device density (around 22-26 CSS pixels)
-    radiusRef.current = Math.round(24 * dpr);
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
-    drawGoldFoil(ctx, width, height, dpr);
-  }, [drawGoldFoil, isFullyRevealed]);
+    drawGoldFoil(canvas);
+  }, [drawGoldFoil, isRevealed]);
 
   useEffect(() => {
     initCanvas();
     const handleResize = () => {
-      // Only re-init if scratching hasn't commenced, avoiding foil reset during scroll
-      if (!hasStartedScratchingRef.current && !isFullyRevealed) {
+      // Do not reset gold foil if user has already started scratching or card is revealed
+      if (!hasStartedScratchingRef.current && !isRevealed) {
         initCanvas();
       }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [initCanvas, isFullyRevealed]);
+  }, [initCanvas, isRevealed]);
 
+  // Reliable completion animation
   const completeReveal = useCallback(() => {
-    if (isFullyRevealed) return;
-    setIsFullyRevealed(true);
+    if (isRevealed) return;
+    setIsRevealed(true);
     isScratchingRef.current = false;
-    lastPosRef.current = null;
+    lastPointRef.current = null;
 
     // Generate floating celebratory hearts
     const hearts = Array.from({ length: 14 }).map((_, i) => ({
@@ -158,19 +159,26 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
         particleCount: 50,
         spread: 60,
         origin: { y: 0.6 },
-        colors: ['#c69c57', '#e8ca88', '#f3dfa2', '#e17085', '#74122d']
+        colors: ['#c69c57', '#e8ca88', '#f3dfa2', '#e17085', '#74122d'],
+        disableForReducedMotion: true,
+        zIndex: 9999,
       });
     } catch {
       // Ignore if confetti not available
     }
 
-    if (onRevealed) onRevealed();
-  }, [isFullyRevealed, onRevealed]);
+    // Remove scratch canvas overlay after the smooth fade completes
+    setTimeout(() => {
+      setIsCanvasRemoved(true);
+    }, 650);
 
-  // Check how much has been scratched (at ~42% threshold auto-complete)
-  const checkScratchPercentage = useCallback(() => {
+    if (onRevealed) onRevealed();
+  }, [isRevealed, onRevealed]);
+
+  // Accurate scratch progress calculation sampling active date area
+  const checkScratchProgress = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || isFullyRevealed) return;
+    if (!canvas || isRevealed) return;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
@@ -178,8 +186,17 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    // Sample pixels across canvas
-    const imgData = ctx.getImageData(0, 0, width, height);
+    // Sample the central region where date content is located (10% to 90% width, 15% to 85% height)
+    const startX = Math.round(width * 0.1);
+    const endX = Math.round(width * 0.9);
+    const startY = Math.round(height * 0.15);
+    const endY = Math.round(height * 0.85);
+    const sampleWidth = endX - startX;
+    const sampleHeight = endY - startY;
+
+    if (sampleWidth <= 0 || sampleHeight <= 0) return;
+
+    const imgData = ctx.getImageData(startX, startY, sampleWidth, sampleHeight);
     const pixels = imgData.data;
     let transparentCount = 0;
     const sampleStep = 16;
@@ -191,116 +208,106 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
       }
     }
 
-    const percentage = transparentCount / totalSamples;
-    if (percentage >= threshold) {
+    const ratio = transparentCount / totalSamples;
+    if (ratio >= threshold) {
       completeReveal();
     }
-  }, [isFullyRevealed, threshold, completeReveal]);
+  }, [isRevealed, threshold, completeReveal]);
 
-  // Exact mapping from screen coordinates to canvas internal pixels
-  const getCanvasPoint = (clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  // Map touch/pointer client coordinates relative to the canvas internal buffer
+  function getPointerPosition(event: React.PointerEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height)
     };
-  };
+  }
 
-  const scratchAt = (x: number, y: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas || isFullyRevealed) return;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
-    const radius = radiusRef.current;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  };
-
-  const interpolateScratch = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
-    const canvas = canvasRef.current;
-    if (!canvas || isFullyRevealed) return;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
-    const dx = p2.x - p1.x;
-    const dy = p2.y - p1.y;
-    const dist = Math.hypot(dx, dy);
-    const radius = radiusRef.current;
-    const step = Math.max(3, radius / 3);
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = radius * 2;
-
-    // Continuous connecting stroke
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.stroke();
-
-    // Intermediate circular dabs for solid, gap-free erase
-    if (dist > step) {
-      const steps = Math.ceil(dist / step);
-      for (let i = 1; i < steps; i++) {
-        const t = i / steps;
-        ctx.beginPath();
-        ctx.arc(p1.x + dx * t, p1.y + dy * t, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Destination circular stamp
-    ctx.beginPath();
-    ctx.arc(p2.x, p2.y, radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  };
-
-  // Modern Unified Pointer Events with setPointerCapture
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (isFullyRevealed) return;
-    isScratchingRef.current = true;
-    hasStartedScratchingRef.current = true;
+    if (isRevealed) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     try {
-      e.currentTarget.setPointerCapture(e.pointerId);
+      canvas.setPointerCapture(e.pointerId);
     } catch {
       // Ignore if pointer capture not supported
     }
 
-    const pos = getCanvasPoint(e.clientX, e.clientY);
-    lastPosRef.current = pos;
-    scratchAt(pos.x, pos.y);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    const { x, y } = getPointerPosition(e, canvas);
+    const lineWidth = 38 * (canvas.width / (canvas.clientWidth || 320));
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.arc(x, y, lineWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.restore();
+
+    isScratchingRef.current = true;
+    hasStartedScratchingRef.current = true;
+    lastPointRef.current = { x, y };
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isScratchingRef.current || isFullyRevealed) return;
+    if (!isScratchingRef.current || isRevealed) return;
 
-    const currentPos = getCanvasPoint(e.clientX, e.clientY);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    if (lastPosRef.current) {
-      interpolateScratch(lastPosRef.current, currentPos);
-    } else {
-      scratchAt(currentPos.x, currentPos.y);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    const { x, y } = getPointerPosition(e, canvas);
+    const previous = lastPointRef.current;
+    const lineWidth = 38 * (canvas.width / (canvas.clientWidth || 320));
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (previous) {
+      ctx.beginPath();
+      ctx.moveTo(previous.x, previous.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      // Intermediate dense circular dabs for smooth, gap-free erase on fast finger swipes
+      const dist = Math.hypot(x - previous.x, y - previous.y);
+      const step = lineWidth / 3;
+      if (dist > step) {
+        const steps = Math.ceil(dist / step);
+        for (let i = 1; i < steps; i++) {
+          const t = i / steps;
+          ctx.beginPath();
+          ctx.arc(previous.x + (x - previous.x) * t, previous.y + (y - previous.y) * t, lineWidth / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
     }
 
-    lastPosRef.current = currentPos;
+    ctx.beginPath();
+    ctx.arc(x, y, lineWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    lastPointRef.current = { x, y };
 
     if (!animFrameRef.current) {
       animFrameRef.current = requestAnimationFrame(() => {
-        checkScratchPercentage();
+        checkScratchProgress();
         animFrameRef.current = null;
       });
     }
@@ -308,15 +315,18 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     isScratchingRef.current = false;
-    lastPosRef.current = null;
-    try {
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        e.currentTarget.releasePointerCapture(e.pointerId);
+    lastPointRef.current = null;
+
+    const canvas = canvasRef.current;
+    if (canvas && canvas.hasPointerCapture(e.pointerId)) {
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore
       }
-    } catch {
-      // Ignore
     }
-    checkScratchPercentage();
+
+    checkScratchProgress();
   };
 
   return (
@@ -326,27 +336,29 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
         className="relative w-full h-36 sm:h-40 rounded-2xl overflow-hidden shadow-inner select-none"
         style={{ touchAction: 'none' }}
       >
-        {/* Revealed Content Behind the scratch foil */}
-        <div className="absolute inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-[#ffffff] to-[#faf6ef] rounded-2xl border border-amber-200/60 shadow-sm">
+        {/* 1. Underlying Date / Reveal Card - already rendered beneath before scratching starts */}
+        <div className="absolute inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-[#ffffff] to-[#faf6ef] rounded-2xl border border-amber-200/60 shadow-sm pointer-events-auto">
           {revealedContent}
         </div>
 
-        {/* Gold Scratch Canvas Layer with smooth dissolution */}
-        <canvas
-          ref={canvasRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-out ${
-            isFullyRevealed ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-grab active:cursor-grabbing'
-          }`}
-          style={{ borderRadius: '1rem', touchAction: 'none' }}
-        />
+        {/* 2. Transparent HTML Canvas placed directly over the card with gold foil */}
+        {!isCanvasRemoved && (
+          <canvas
+            ref={canvasRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={`scratch-canvas absolute inset-0 transition-opacity duration-600 ease-out ${
+              isRevealed ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-grab active:cursor-grabbing'
+            }`}
+            style={{ borderRadius: '1rem', touchAction: 'none' }}
+          />
+        )}
 
-        {/* Floating Hearts when revealed */}
+        {/* Floating Celebratory Hearts when revealed */}
         <AnimatePresence>
-          {isFullyRevealed && floatingHearts.map((heart) => (
+          {isRevealed && floatingHearts.map((heart) => (
             <motion.div
               key={heart.id}
               initial={{ opacity: 0, y: 30, scale: 0.5, x: 0 }}
@@ -376,8 +388,8 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Accessible Tap-to-Reveal Alternative */}
-      {!isFullyRevealed && (
+      {/* 3. Accessible Secondary Tap-to-Reveal Control */}
+      {!isRevealed && (
         <button
           type="button"
           onClick={completeReveal}

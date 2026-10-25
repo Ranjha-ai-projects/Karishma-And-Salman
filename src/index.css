@@ -131,21 +131,37 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: radial-gradient(ellipse at center, #faf2e8 0%, #f2e8de 65%, #e9d9ca 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  isolation: isolate;
+  background: transparent;
+}
+
+.envelope-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, #faf2e8 0%, #f2e8de 65%, #e9d9ca 100%);
+  z-index: 1;
+  pointer-events: none;
   will-change: opacity;
 }
 
-.envelope-overlay::before {
+.envelope-backdrop::before {
   content: "";
   position: absolute;
   inset: clamp(15px, 2.6vw, 34px);
   border: 1px solid rgba(181, 141, 91, 0.2);
   pointer-events: none;
+}
+
+.scratch-canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .header-note {

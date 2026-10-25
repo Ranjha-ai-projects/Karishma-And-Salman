@@ -12,10 +12,10 @@ import { VenueDetails } from './components/VenueDetails';
 import { FamilyDetails } from './components/FamilyDetails';
 import { ThankYou } from './components/ThankYou';
 
+export type EntranceState = 'closed' | 'animating' | 'revealed';
+
 export function App() {
-  const [isOpened, setIsOpened] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [overlayUnmounted, setOverlayUnmounted] = useState(false);
+  const [entranceState, setEntranceState] = useState<EntranceState>('closed');
   const [startMusic, setStartMusic] = useState(false);
 
   // Dev mode flag for testing replay if needed: e.g. ?dev=true or ?replay=true
@@ -30,6 +30,7 @@ export function App() {
   const sealMonogram = `${brideFirstName.charAt(0).toUpperCase()}${groomFirstName.charAt(0).toUpperCase()}`;
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const emblemRef = useRef<HTMLButtonElement | null>(null);
   const headerNoteRef = useRef<HTMLDivElement | null>(null);
@@ -52,10 +53,10 @@ export function App() {
   const isTriggeredRef = useRef(false);
 
   const handleOpenEnvelope = () => {
-    if (isTriggeredRef.current || isAnimating || isOpened) return;
+    if (isTriggeredRef.current || entranceState !== 'closed') return;
     isTriggeredRef.current = true;
 
-    setIsAnimating(true);
+    setEntranceState('animating');
     setStartMusic(true);
 
     // Golden celebratory particles burst
@@ -73,15 +74,14 @@ export function App() {
     }
 
     const overlay = overlayRef.current;
+    const backdrop = backdropRef.current;
     const scene = sceneRef.current;
     const emblem = emblemRef.current;
     const headerNote = headerNoteRef.current;
     const hint = hintRef.current;
 
     if (!scene || !overlay) {
-      setIsOpened(true);
-      setOverlayUnmounted(true);
-      setIsAnimating(false);
+      setEntranceState('revealed');
       document.body.style.overflow = '';
       return;
     }
@@ -94,9 +94,7 @@ export function App() {
     if (prefersReducedMotion) {
       const tl = gsap.timeline({
         onComplete: () => {
-          setIsOpened(true);
-          setOverlayUnmounted(true);
-          setIsAnimating(false);
+          setEntranceState('revealed');
           document.body.style.overflow = '';
           window.scrollTo({ top: 0, behavior: 'instant' });
         },
@@ -105,16 +103,21 @@ export function App() {
       timelineRef.current = tl;
       if (headerNote) tl.to(headerNote, { opacity: 0, duration: 0.2 }, 0);
       if (hint) tl.to(hint, { opacity: 0, duration: 0.2 }, 0);
-      tl.to([scene, overlay], { opacity: 0, duration: 0.55, ease: 'power1.out' }, 0.1);
+      if (backdrop) tl.to(backdrop, { opacity: 0, duration: 0.6, ease: 'power1.out' }, 0.1);
+      tl.to(scene, { opacity: 0, duration: 0.6, ease: 'power1.out' }, 0.1);
       return;
     }
 
-    // Synchronized GSAP Timeline for cinematic zoom and progressive dissolve
+    // Dynamic zoom scale calculation based on viewport and envelope dimensions
+    const rect = scene.getBoundingClientRect();
+    const scaleX = window.innerWidth / (rect.width || 1);
+    const scaleY = window.innerHeight / (rect.height || 1);
+    const requiredScale = Math.max(scaleX, scaleY, 3.5) * 1.35;
+
+    // Synchronized GSAP Timeline: simultaneous zoom, backdrop dissolve, and progressive transparency
     const tl = gsap.timeline({
       onComplete: () => {
-        setIsOpened(true);
-        setOverlayUnmounted(true);
-        setIsAnimating(false);
+        setEntranceState('revealed');
         document.body.style.overflow = '';
         window.scrollTo({ top: 0, behavior: 'instant' });
       },
@@ -127,9 +130,9 @@ export function App() {
       tl.to(
         emblem,
         {
-          scale: 0.94,
+          scale: 0.93,
           duration: 0.2,
-          ease: 'power2.inOut',
+          ease: 'power2.out',
           yoyo: true,
           repeat: 1,
         },
@@ -143,7 +146,7 @@ export function App() {
         headerNote,
         {
           opacity: 0,
-          y: -12,
+          y: -14,
           duration: 0.3,
           ease: 'power2.out',
         },
@@ -156,7 +159,7 @@ export function App() {
         hint,
         {
           opacity: 0,
-          y: 12,
+          y: 14,
           duration: 0.3,
           ease: 'power2.out',
         },
@@ -164,12 +167,25 @@ export function App() {
       );
     }
 
-    // 0.20s–1.50s: Continuous, butter-smooth zoom towards viewer without speed jumps
+    // 0.20s–1.40s: Backdrop dissolves to transparent, exposing cream invitation underneath
+    if (backdrop) {
+      tl.to(
+        backdrop,
+        {
+          opacity: 0,
+          duration: 1.2,
+          ease: 'power2.inOut',
+        },
+        0.2
+      );
+    }
+
+    // 0.20s–1.60s: Envelope scene smoothly zooms toward viewer past viewport boundaries
     tl.to(
       scene,
       {
-        scale: 3.5,
-        duration: 1.3,
+        scale: requiredScale,
+        duration: 1.4,
         ease: 'power2.inOut',
         transformOrigin: '50% 50%',
         force3D: true,
@@ -177,26 +193,15 @@ export function App() {
       0.2
     );
 
-    // 0.65s–1.45s: Envelope dissolves smoothly into the cream invitation already visible underneath
+    // 0.60s–1.50s: Envelope dissolves smoothly so cream invitation emerges right through it
     tl.to(
       scene,
       {
         opacity: 0,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.inOut',
       },
-      0.65
-    );
-
-    // 0.85s–1.55s: Overlay radial backdrop dissolves cleanly to reveal cream invitation
-    tl.to(
-      overlay,
-      {
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power1.out',
-      },
-      0.85
+      0.6
     );
   };
 
@@ -206,12 +211,10 @@ export function App() {
     if (timelineRef.current) timelineRef.current.kill();
     document.body.style.overflow = 'hidden';
     window.scrollTo({ top: 0, behavior: 'instant' });
-    setIsOpened(false);
-    setIsAnimating(false);
-    setOverlayUnmounted(false);
+    setEntranceState('closed');
 
-    if (overlayRef.current) {
-      gsap.set(overlayRef.current, { opacity: 1 });
+    if (backdropRef.current) {
+      gsap.set(backdropRef.current, { opacity: 1 });
     }
     if (sceneRef.current) {
       gsap.set(sceneRef.current, { scale: 1, opacity: 1 });
@@ -267,7 +270,7 @@ export function App() {
           LAYER 2: FOREGROUND ROYAL ENVELOPE OVERLAY
           Smoothly zooms and dissolves, directly exposing the cream invitation
       ========================================================================= */}
-      {!overlayUnmounted && (
+      {entranceState !== 'revealed' && (
         <div
           ref={overlayRef}
           className="envelope-overlay"
@@ -276,8 +279,11 @@ export function App() {
             touchAction: 'none',
           }}
         >
+          {/* Dedicated Backdrop Layer that dissolves concurrently with the envelope */}
+          <div ref={backdropRef} className="envelope-backdrop" />
+
           {/* Top Header Note (Dynamic Couple Names) */}
-          <div ref={headerNoteRef} className="header-note font-cinzel tracking-[0.24em] sm:tracking-[0.28em] text-[#8e6e53] text-[11px] sm:text-xs font-semibold px-4">
+          <div ref={headerNoteRef} className="header-note font-cinzel tracking-[0.24em] sm:tracking-[0.28em] text-[#8e6e53] text-[11px] sm:text-xs font-semibold px-4 z-10">
             {envelopeHeading}
           </div>
 
@@ -302,7 +308,7 @@ export function App() {
               className="emblem-btn group"
               onClick={handleOpenEnvelope}
               aria-label={`Open wedding invitation for ${brideFirstName} and ${groomFirstName}`}
-              disabled={isAnimating}
+              disabled={entranceState !== 'closed'}
             >
               {/* Rotating sparkle aura */}
               <span className="emblem-spark" aria-hidden="true" />
@@ -338,14 +344,14 @@ export function App() {
           </div>
 
           {/* Bottom Hint */}
-          <div ref={hintRef} className="hint">
+          <div ref={hintRef} className="hint z-10">
             Tap the golden emblem to enter
           </div>
         </div>
       )}
 
       {/* Development-Only Replay Button (Only visible if ?dev=true or ?replay=true in URL) */}
-      {isDevMode && isOpened && (
+      {isDevMode && entranceState === 'revealed' && (
         <button
           type="button"
           onClick={handleDevReset}
