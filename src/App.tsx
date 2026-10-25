@@ -19,7 +19,9 @@ export function App() {
   const [startMusic, setStartMusic] = useState(false);
 
   // Dev mode flag for testing replay if needed: e.g. ?dev=true or ?replay=true
-  const [isDevMode, setIsDevMode] = useState(false);
+  const isDevMode = typeof window !== 'undefined' 
+    ? new URLSearchParams(window.location.search).has('dev') || new URLSearchParams(window.location.search).has('replay')
+    : false;
 
   // Dynamic couple names for envelope personalization
   const brideFirstName = invitationData.bride.name.trim().split(/\s+/)[0] || 'Karishma';
@@ -35,12 +37,6 @@ export function App() {
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
-    // Check for dev mode in query string
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      setIsDevMode(params.has('dev') || params.has('replay'));
-    }
-
     // Scroll to top and lock scroll during unopened envelope state
     window.scrollTo(0, 0);
     document.body.style.overflow = 'hidden';
@@ -53,8 +49,11 @@ export function App() {
     };
   }, []);
 
+  const isTriggeredRef = useRef(false);
+
   const handleOpenEnvelope = () => {
-    if (isAnimating || isOpened) return;
+    if (isTriggeredRef.current || isAnimating || isOpened) return;
+    isTriggeredRef.current = true;
 
     setIsAnimating(true);
     setStartMusic(true);
@@ -73,17 +72,6 @@ export function App() {
       // Ignore if canvas-confetti is not loaded
     }
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      setIsOpened(true);
-      setOverlayUnmounted(true);
-      setIsAnimating(false);
-      document.body.style.overflow = '';
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      return;
-    }
-
     const overlay = overlayRef.current;
     const scene = sceneRef.current;
     const emblem = emblemRef.current;
@@ -100,7 +88,28 @@ export function App() {
 
     if (timelineRef.current) timelineRef.current.kill();
 
-    // Synchronized GSAP Timeline for butter-smooth zoom and progressive dissolve
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Accessible gentle fade alternative for reduced motion preference (no harsh zoom, but no instant pop)
+    if (prefersReducedMotion) {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setIsOpened(true);
+          setOverlayUnmounted(true);
+          setIsAnimating(false);
+          document.body.style.overflow = '';
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        },
+      });
+
+      timelineRef.current = tl;
+      if (headerNote) tl.to(headerNote, { opacity: 0, duration: 0.2 }, 0);
+      if (hint) tl.to(hint, { opacity: 0, duration: 0.2 }, 0);
+      tl.to([scene, overlay], { opacity: 0, duration: 0.55, ease: 'power1.out' }, 0.1);
+      return;
+    }
+
+    // Synchronized GSAP Timeline for cinematic zoom and progressive dissolve
     const tl = gsap.timeline({
       onComplete: () => {
         setIsOpened(true);
@@ -113,14 +122,16 @@ export function App() {
 
     timelineRef.current = tl;
 
-    // 0.00s–0.20s: Emblem tactile response
+    // 0.00s–0.25s: Emblem tactile response
     if (emblem) {
       tl.to(
         emblem,
         {
-          scale: 0.93,
+          scale: 0.94,
           duration: 0.2,
           ease: 'power2.inOut',
+          yoyo: true,
+          repeat: 1,
         },
         0
       );
@@ -153,42 +164,31 @@ export function App() {
       );
     }
 
-    // 0.20s–0.80s: Gentle smooth zoom acceleration
+    // 0.20s–1.50s: Continuous, butter-smooth zoom towards viewer without speed jumps
     tl.to(
       scene,
       {
-        scale: 1.65,
-        duration: 0.6,
-        ease: 'power2.in',
+        scale: 3.5,
+        duration: 1.3,
+        ease: 'power2.inOut',
         transformOrigin: '50% 50%',
+        force3D: true,
       },
       0.2
     );
 
-    // 0.80s–1.60s: Continuous scaling outward to 3.8x without sudden jumps
-    tl.to(
-      scene,
-      {
-        scale: 3.8,
-        duration: 0.8,
-        ease: 'power2.out',
-        transformOrigin: '50% 50%',
-      },
-      0.8
-    );
-
-    // 0.75s–1.55s: Envelope dissolves smoothly into the cream invitation already visible underneath
+    // 0.65s–1.45s: Envelope dissolves smoothly into the cream invitation already visible underneath
     tl.to(
       scene,
       {
         opacity: 0,
         duration: 0.8,
-        ease: 'power1.inOut',
+        ease: 'power2.inOut',
       },
-      0.75
+      0.65
     );
 
-    // 0.95s–1.65s: Overlay radial backdrop dissolves cleanly to reveal cream invitation
+    // 0.85s–1.55s: Overlay radial backdrop dissolves cleanly to reveal cream invitation
     tl.to(
       overlay,
       {
@@ -196,12 +196,13 @@ export function App() {
         duration: 0.7,
         ease: 'power1.out',
       },
-      0.95
+      0.85
     );
   };
 
   // Dev-only reset function
   const handleDevReset = () => {
+    isTriggeredRef.current = false;
     if (timelineRef.current) timelineRef.current.kill();
     document.body.style.overflow = 'hidden';
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -272,8 +273,7 @@ export function App() {
           className="envelope-overlay"
           aria-label="Open the royal invitation"
           style={{
-            touchAction: isAnimating ? 'none' : 'auto',
-            pointerEvents: isAnimating ? 'none' : 'auto',
+            touchAction: 'none',
           }}
         >
           {/* Top Header Note (Dynamic Couple Names) */}

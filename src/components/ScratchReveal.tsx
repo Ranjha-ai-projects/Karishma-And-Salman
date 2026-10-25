@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ScratchRevealProps {
   onRevealed?: () => void;
   revealedContent: React.ReactNode;
-  threshold?: number; // percentage scratched to auto-reveal (0.45 = 45%)
+  threshold?: number; // percentage scratched to auto-reveal (0.42 = 42%)
   scratchPrompt?: string;
   scratchSubtext?: string;
 }
@@ -13,7 +13,7 @@ interface ScratchRevealProps {
 export const ScratchReveal: React.FC<ScratchRevealProps> = ({
   onRevealed,
   revealedContent,
-  threshold = 0.45,
+  threshold = 0.42,
   scratchPrompt = "✦ SCRATCH TO REVEAL ✦",
   scratchSubtext = "Scratch the gold to reveal our wedding dates"
 }) => {
@@ -21,13 +21,26 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastPosRef = useRef<{ x: number; y: number } | null>(null);
   const isScratchingRef = useRef(false);
+  const hasStartedScratchingRef = useRef(false);
+  const radiusRef = useRef(36);
   const animFrameRef = useRef<number | null>(null);
 
   const [isFullyRevealed, setIsFullyRevealed] = useState(false);
-  const [floatingHearts, setFloatingHearts] = useState<Array<{ id: number; left: number; size: number; delay: number }>>([]);
+  const [floatingHearts, setFloatingHearts] = useState<Array<{
+    id: number;
+    left: number;
+    size: number;
+    delay: number;
+    targetY: number;
+    targetX: number;
+    targetRotate: number;
+  }>>([]);
 
   // Draw gold foil texture on canvas
-  const drawGoldFoil = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
+  const drawGoldFoil = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, dpr: number) => {
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
     // Rich golden metallic gradient
     const grad = ctx.createLinearGradient(0, 0, width, height);
     grad.addColorStop(0, '#c79c4a');
@@ -41,7 +54,7 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     ctx.fillRect(0, 0, width, height);
 
     // Add gold flecks / sparkles overlay
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     for (let i = 0; i < 45; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
@@ -52,7 +65,7 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     }
 
     // Add subtle darker gold specks
-    ctx.fillStyle = 'rgba(120, 80, 20, 0.18)';
+    ctx.fillStyle = 'rgba(120, 80, 20, 0.2)';
     for (let i = 0; i < 35; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
@@ -69,94 +82,73 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
 
     // Top prompt
     ctx.font = 'bold 13px "Cinzel", Georgia, serif';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
     ctx.shadowBlur = 4;
     ctx.shadowOffsetX = 1;
     ctx.shadowOffsetY = 1;
     ctx.fillText(scratchPrompt, width / 2, height / 2 - 12);
 
-    // Heart icon above or between text
+    // Heart icon above text
     ctx.font = '16px "Cormorant Garamond", Georgia, serif';
     ctx.fillText('♡', width / 2, height / 2 - 32);
 
     // Subtext
-    ctx.font = 'italic 11px "Cormorant Garamond", Georgia, serif';
+    ctx.font = 'italic 12px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = '#fffdf5';
     ctx.fillText(scratchSubtext, width / 2, height / 2 + 15);
 
-    // Reset shadow
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    ctx.restore();
   }, [scratchPrompt, scratchSubtext]);
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container || isFullyRevealed) return;
+    if (!canvas || !container || isFullyRevealed || hasStartedScratchingRef.current) return;
 
     const rect = container.getBoundingClientRect();
-    const width = rect.width || 300;
-    const height = rect.height || 140;
+    const width = Math.max(280, rect.width || 320);
+    const height = Math.max(120, rect.height || 150);
 
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+
+    // Dynamic stroke radius based on device density (around 22-26 CSS pixels)
+    radiusRef.current = Math.round(24 * dpr);
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
-    ctx.scale(dpr, dpr);
-    drawGoldFoil(ctx, width, height);
+    drawGoldFoil(ctx, width, height, dpr);
   }, [drawGoldFoil, isFullyRevealed]);
 
   useEffect(() => {
     initCanvas();
-    window.addEventListener('resize', initCanvas);
-    return () => window.removeEventListener('resize', initCanvas);
-  }, [initCanvas]);
-
-  // Check how much has been scratched (at ~45% threshold auto-complete)
-  const checkScratchPercentage = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || isFullyRevealed) return;
-
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Sample every 16th pixel for high performance
-    const imgData = ctx.getImageData(0, 0, width, height);
-    const pixels = imgData.data;
-    let transparentCount = 0;
-    const sampleStep = 16;
-    const totalSamples = pixels.length / (4 * sampleStep);
-
-    for (let i = 3; i < pixels.length; i += 4 * sampleStep) {
-      if (pixels[i] < 128) {
-        transparentCount++;
+    const handleResize = () => {
+      // Only re-init if scratching hasn't commenced, avoiding foil reset during scroll
+      if (!hasStartedScratchingRef.current && !isFullyRevealed) {
+        initCanvas();
       }
-    }
-
-    const percentage = transparentCount / totalSamples;
-    if (percentage >= threshold) {
-      completeReveal();
-    }
-  }, [isFullyRevealed, threshold]);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [initCanvas, isFullyRevealed]);
 
   const completeReveal = useCallback(() => {
     if (isFullyRevealed) return;
     setIsFullyRevealed(true);
+    isScratchingRef.current = false;
+    lastPosRef.current = null;
 
     // Generate floating celebratory hearts
     const hearts = Array.from({ length: 14 }).map((_, i) => ({
       id: i,
       left: 10 + Math.random() * 80,
       size: 16 + Math.random() * 20,
-      delay: Math.random() * 0.4
+      delay: Math.random() * 0.4,
+      targetY: -140 - Math.random() * 60,
+      targetX: (Math.random() - 0.5) * 40,
+      targetRotate: (Math.random() - 0.5) * 45,
     }));
     setFloatingHearts(hearts);
 
@@ -175,41 +167,137 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     if (onRevealed) onRevealed();
   }, [isFullyRevealed, onRevealed]);
 
-  // Smooth continuous scratch stroke with linear interpolation
-  const performScratch = (clientX: number, clientY: number) => {
+  // Check how much has been scratched (at ~42% threshold auto-complete)
+  const checkScratchPercentage = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || isFullyRevealed) return;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Sample pixels across canvas
+    const imgData = ctx.getImageData(0, 0, width, height);
+    const pixels = imgData.data;
+    let transparentCount = 0;
+    const sampleStep = 16;
+    const totalSamples = pixels.length / (4 * sampleStep);
+
+    for (let i = 3; i < pixels.length; i += 4 * sampleStep) {
+      if (pixels[i] < 128) {
+        transparentCount++;
+      }
+    }
+
+    const percentage = transparentCount / totalSamples;
+    if (percentage >= threshold) {
+      completeReveal();
+    }
+  }, [isFullyRevealed, threshold, completeReveal]);
+
+  // Exact mapping from screen coordinates to canvas internal pixels
+  const getCanvasPoint = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const currentX = clientX - rect.left;
-    const currentY = clientY - rect.top;
-    const dpr = window.devicePixelRatio || 1;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
+  const scratchAt = (x: number, y: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas || isFullyRevealed) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    const radius = radiusRef.current;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const interpolateScratch = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
+    const canvas = canvasRef.current;
+    if (!canvas || isFullyRevealed) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dist = Math.hypot(dx, dy);
+    const radius = radiusRef.current;
+    const step = Math.max(3, radius / 3);
 
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 44 * dpr;
+    ctx.lineWidth = radius * 2;
 
-    if (lastPosRef.current) {
-      ctx.beginPath();
-      ctx.moveTo(lastPosRef.current.x * dpr, lastPosRef.current.y * dpr);
-      ctx.lineTo(currentX * dpr, currentY * dpr);
-      ctx.stroke();
+    // Continuous connecting stroke
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+
+    // Intermediate circular dabs for solid, gap-free erase
+    if (dist > step) {
+      const steps = Math.ceil(dist / step);
+      for (let i = 1; i < steps; i++) {
+        const t = i / steps;
+        ctx.beginPath();
+        ctx.arc(p1.x + dx * t, p1.y + dy * t, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // Circular brush dab at current coordinate
+    // Destination circular stamp
     ctx.beginPath();
-    ctx.arc(currentX * dpr, currentY * dpr, 22 * dpr, 0, Math.PI * 2);
+    ctx.arc(p2.x, p2.y, radius, 0, Math.PI * 2);
     ctx.fill();
+
     ctx.restore();
+  };
 
-    lastPosRef.current = { x: currentX, y: currentY };
+  // Modern Unified Pointer Events with setPointerCapture
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isFullyRevealed) return;
+    isScratchingRef.current = true;
+    hasStartedScratchingRef.current = true;
 
-    // Debounced percentage check with animation frame
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if pointer capture not supported
+    }
+
+    const pos = getCanvasPoint(e.clientX, e.clientY);
+    lastPosRef.current = pos;
+    scratchAt(pos.x, pos.y);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isScratchingRef.current || isFullyRevealed) return;
+
+    const currentPos = getCanvasPoint(e.clientX, e.clientY);
+
+    if (lastPosRef.current) {
+      interpolateScratch(lastPosRef.current, currentPos);
+    } else {
+      scratchAt(currentPos.x, currentPos.y);
+    }
+
+    lastPosRef.current = currentPos;
+
     if (!animFrameRef.current) {
       animFrameRef.current = requestAnimationFrame(() => {
         checkScratchPercentage();
@@ -218,77 +306,40 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     }
   };
 
-  // Mouse handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    isScratchingRef.current = true;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
-      lastPosRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
-    performScratch(e.clientX, e.clientY);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isScratchingRef.current) {
-      performScratch(e.clientX, e.clientY);
-    }
-  };
-
-  const handleMouseUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     isScratchingRef.current = false;
     lastPosRef.current = null;
-  };
-
-  // Touch handlers with touch-action: none for mobile responsiveness
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length > 0) {
-      isScratchingRef.current = true;
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect) {
-        lastPosRef.current = {
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top
-        };
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
       }
-      performScratch(e.touches[0].clientX, e.touches[0].clientY);
+    } catch {
+      // Ignore
     }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isScratchingRef.current && e.touches.length > 0) {
-      performScratch(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    isScratchingRef.current = false;
-    lastPosRef.current = null;
+    checkScratchPercentage();
   };
 
   return (
     <div className="w-full flex flex-col items-center">
       <div 
         ref={containerRef}
-        className="relative w-full h-36 sm:h-40 rounded-2xl overflow-hidden shadow-inner select-none cursor-grab active:cursor-grabbing touch-none"
+        className="relative w-full h-36 sm:h-40 rounded-2xl overflow-hidden shadow-inner select-none"
+        style={{ touchAction: 'none' }}
       >
         {/* Revealed Content Behind the scratch foil */}
         <div className="absolute inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-[#ffffff] to-[#faf6ef] rounded-2xl border border-amber-200/60 shadow-sm">
           {revealedContent}
         </div>
 
-        {/* Gold Scratch Canvas Layer with gentle fade dissolve */}
+        {/* Gold Scratch Canvas Layer with smooth dissolution */}
         <canvas
           ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchEnd}
-          className={`absolute inset-0 w-full h-full touch-none transition-opacity duration-1000 ease-out ${
-            isFullyRevealed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-out ${
+            isFullyRevealed ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-grab active:cursor-grabbing'
           }`}
           style={{ borderRadius: '1rem', touchAction: 'none' }}
         />
@@ -301,10 +352,10 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
               initial={{ opacity: 0, y: 30, scale: 0.5, x: 0 }}
               animate={{ 
                 opacity: [0, 0.9, 0.9, 0],
-                y: -140 - Math.random() * 60,
-                x: (Math.random() - 0.5) * 40,
+                y: heart.targetY,
+                x: heart.targetX,
                 scale: [0.5, 1.2, 1],
-                rotate: (Math.random() - 0.5) * 45
+                rotate: heart.targetRotate
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 2.4, delay: heart.delay, ease: "easeOut" }}
@@ -330,14 +381,16 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
         <button
           type="button"
           onClick={completeReveal}
-          className="mt-2.5 px-3 py-1 rounded-full text-[11px] font-cinzel tracking-wider text-[#a77d46] hover:text-[#58152d] hover:bg-[#fbf5e6] transition-all flex items-center gap-1.5 cursor-pointer"
+          className="mt-3 px-3.5 py-1.5 rounded-full text-xs font-cinzel tracking-wider text-[#6b1228] bg-[#fbf5e6]/80 hover:bg-[#fbf5e6] border border-[#c69c57]/40 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer font-semibold"
           aria-label="Tap to reveal wedding date directly without scratching"
         >
-          <span>✦</span>
-          <span className="underline underline-offset-4 decoration-[#a77d46]/40">Tap to reveal directly</span>
-          <span>✦</span>
+          <span className="text-[#c69c57]">✦</span>
+          <span className="underline underline-offset-4 decoration-[#6b1228]/40">Tap to reveal directly</span>
+          <span className="text-[#c69c57]">✦</span>
         </button>
       )}
     </div>
   );
 };
+
+export default ScratchReveal;

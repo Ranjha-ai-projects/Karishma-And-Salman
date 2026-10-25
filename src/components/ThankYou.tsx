@@ -10,22 +10,22 @@ interface ThankYouProps {
 
 export const ThankYou: React.FC<ThankYouProps> = ({ thankYou }) => {
   return (
-    <section className="relative w-full pt-16 pb-12 px-4 flex flex-col items-center text-center bg-gradient-to-b from-[#460918] via-[#5a0d20] to-[#3a0614] text-[#fbf8f2] overflow-hidden">
-      {/* Background Floating Golden Stardust */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 30 }).map((_, i) => (
+    <section className="relative w-full pt-16 pb-12 px-4 flex flex-col items-center text-center bg-gradient-to-b from-[#460918] via-[#5a0d20] to-[#3a0614] text-[#F8EBDD] overflow-hidden">
+      {/* Background Floating Golden Stardust (pointer-events-none, strictly non-interfering) */}
+      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+        {Array.from({ length: 18 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full bg-amber-300"
             style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              opacity: Math.random() * 0.7 + 0.3,
+              top: `${(i * 21) % 100}%`,
+              left: `${(i * 31) % 100}%`,
+              width: `${(i % 3) + 1.5}px`,
+              height: `${(i % 3) + 1.5}px`,
+              opacity: 0.35 + (i % 4) * 0.1,
               boxShadow: '0 0 8px rgba(245, 210, 120, 0.8)',
-              animation: `float-particle ${Math.random() * 4 + 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`
+              animation: `float-particle ${4 + (i % 4)}s ease-in-out infinite`,
+              animationDelay: `${(i % 3)}s`
             }}
           />
         ))}
@@ -62,7 +62,7 @@ export const ThankYou: React.FC<ThankYouProps> = ({ thankYou }) => {
           transition={{ duration: 0.7, delay: 0.1 }}
           className="space-y-1"
         >
-          <h3 className="font-cinzel text-xs tracking-[0.25em] text-[#e8ca88] uppercase font-medium">
+          <h3 className="font-cinzel text-xs sm:text-sm tracking-[0.25em] text-[#F8EBDD] uppercase font-bold">
             {thankYou.header}
           </h3>
           <h2 className="font-script text-5xl sm:text-6xl text-[#f3dfa2] font-normal leading-tight drop-shadow-[0_2px_12px_rgba(230,190,100,0.3)]">
@@ -79,7 +79,7 @@ export const ThankYou: React.FC<ThankYouProps> = ({ thankYou }) => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="space-y-6 pt-2"
         >
-          <p className="font-serif italic text-base sm:text-lg text-[#f7e8c8] leading-relaxed max-w-sm mx-auto font-light">
+          <p className="font-serif italic text-base sm:text-lg text-[#F8EBDD] leading-relaxed max-w-sm mx-auto font-medium">
             {thankYou.message}
           </p>
 
@@ -91,16 +91,18 @@ export const ThankYou: React.FC<ThankYouProps> = ({ thankYou }) => {
       </div>
 
       {/* Bottom Glowing Lanterns */}
-      <div className="w-full relative mt-12 mb-2">
+      <div className="w-full relative mt-12 mb-2 pointer-events-none select-none">
         <Lanterns position="bottom" />
       </div>
 
       {/* Footer Subtext */}
       <div className="pt-4 text-center">
-        <p className="font-cinzel text-[9px] tracking-[0.3em] text-[#c69c57]/60 uppercase">
+        <p className="font-cinzel text-[10px] sm:text-xs tracking-[0.3em] text-[#F8EBDD]/70 font-semibold uppercase">
           Made With Love
         </p>
       </div>
     </section>
   );
 };
+
+export default ThankYou;

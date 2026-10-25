@@ -30,7 +30,7 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
           <h2 className="font-arabic text-3xl sm:text-4xl text-[#5a0d20] font-bold tracking-wide leading-relaxed">
             {data.bismillah}
           </h2>
-          <p className="font-serif italic text-xs sm:text-sm text-[#7a5c48] font-normal">
+          <p className="font-serif italic text-sm sm:text-base text-[#532033] font-medium">
             {data.bismillahTranslation}
           </p>
         </motion.div>
@@ -43,15 +43,15 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
           transition={{ duration: 0.7, delay: 0.1 }}
           className="space-y-2 pt-2"
         >
-          <p className="font-serif text-sm sm:text-base text-[#4a2e2b] font-medium tracking-wide">
+          <p className="font-serif text-base sm:text-lg text-[#532033] font-semibold tracking-wide">
             {data.hostHeader}
           </p>
-          <p className="font-cinzel text-[11px] sm:text-xs tracking-[0.2em] text-[#74122d] font-semibold flex items-center justify-center gap-1.5">
-            <span className="text-[10px] text-[#c69c57]">✦</span>
+          <p className="font-cinzel text-xs sm:text-sm tracking-[0.2em] text-[#74122d] font-bold flex items-center justify-center gap-2">
+            <span className="text-xs text-[#c69c57]">✦</span>
             <span>TOGETHER WITH THEIR FAMILIES</span>
-            <span className="text-[10px] text-[#c69c57]">✦</span>
+            <span className="text-xs text-[#c69c57]">✦</span>
           </p>
-          <p className="font-serif text-xs sm:text-sm text-[#7a6455] leading-relaxed max-w-xs mx-auto pt-1 font-light">
+          <p className="font-serif text-sm sm:text-base text-[#532033] leading-relaxed max-w-sm mx-auto pt-1 font-medium">
             {data.invitationNote}
           </p>
         </motion.div>
@@ -62,15 +62,15 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.15 }}
-          className="space-y-1 pt-4 pb-2"
+          className="space-y-1.5 pt-4 pb-2"
         >
           <p className="font-arabic text-3xl sm:text-4xl text-[#5a0d20] font-bold">
             {data.quranVerse}
           </p>
-          <p className="font-serif italic text-xs sm:text-sm text-[#7a5c48]">
+          <p className="font-serif italic text-sm sm:text-base text-[#532033] font-medium">
             {data.quranVerseTranslation}
           </p>
-          <p className="font-cinzel text-[10px] tracking-widest text-[#9d806a]">
+          <p className="font-cinzel text-xs tracking-widest text-[#74122d] font-bold">
             {data.quranReference}
           </p>
         </motion.div>
@@ -88,10 +88,10 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
             <h1 className="font-script text-6xl sm:text-7xl text-[#c69c57] leading-none drop-shadow-[0_2px_8px_rgba(198,156,87,0.25)] hover:scale-105 transition-transform duration-300">
               {data.bride.name}
             </h1>
-            <p className="font-serif text-xs sm:text-sm text-[#4a2e2b] font-medium pt-1">
+            <p className="font-serif text-sm sm:text-base text-[#532033] font-semibold pt-1">
               {data.bride.subtitle}
             </p>
-            <p className="font-serif italic text-xs text-[#7a6455]">
+            <p className="font-serif italic text-sm text-[#532033] font-medium">
               {data.bride.parents}
             </p>
           </motion.div>
@@ -104,11 +104,11 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
             transition={{ duration: 0.6 }}
             className="flex items-center justify-center gap-4 my-2"
           >
-            <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-[#c69c57]" />
+            <div className="h-[1.5px] w-16 bg-gradient-to-r from-transparent to-[#c69c57]" />
             <span className="font-great-vibes text-3xl sm:text-4xl text-[#74122d] font-normal italic px-2">
               Weds
             </span>
-            <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-[#c69c57]" />
+            <div className="h-[1.5px] w-16 bg-gradient-to-l from-transparent to-[#c69c57]" />
           </motion.div>
 
           {/* Groom */}
@@ -123,11 +123,11 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
               {data.groom.name}
             </h2>
             {data.groom.subtitle && (
-              <p className="font-serif text-xs sm:text-sm text-[#4a2e2b] font-medium pt-1">
+              <p className="font-serif text-sm sm:text-base text-[#532033] font-semibold pt-1">
                 {data.groom.subtitle}
               </p>
             )}
-            <p className="font-serif italic text-xs text-[#7a6455]">
+            <p className="font-serif italic text-sm text-[#532033] font-medium">
               {data.groom.parents}
             </p>
           </motion.div>
@@ -141,27 +141,27 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
           transition={{ duration: 0.8 }}
           className="pt-2"
         >
-          <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#c69c57]/50 to-transparent my-4" />
+          <div className="w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#c69c57]/60 to-transparent my-4" />
           
-          <div className="space-y-1.5 py-1">
+          <div className="space-y-2 py-1">
             <p className="font-arabic text-2xl text-[#5a0d20] font-bold">
               {data.mainEvent.blessing}
             </p>
             <h3 className="font-great-vibes text-4xl sm:text-5xl text-[#5a0d20] font-medium leading-tight">
               {data.mainEvent.title}
             </h3>
-            <p className="font-serif text-sm sm:text-base text-[#4a2e2b] font-medium pt-1">
+            <p className="font-serif text-base sm:text-lg text-[#532033] font-bold pt-1">
               {data.mainEvent.date}
             </p>
-            <p className="font-serif text-xs sm:text-sm text-[#7a6455]">
+            <p className="font-serif text-sm sm:text-base text-[#532033] font-medium leading-relaxed">
               {data.mainEvent.time}
             </p>
-            <p className="font-serif text-xs sm:text-sm text-[#4a2e2b] font-medium">
+            <p className="font-serif text-sm sm:text-base text-[#532033] font-semibold">
               {data.mainEvent.venue}
             </p>
           </div>
 
-          <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#c69c57]/50 to-transparent my-4" />
+          <div className="w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#c69c57]/60 to-transparent my-4" />
         </motion.div>
 
         {/* Pill Badges: Date & Location */}
@@ -173,17 +173,17 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
           className="flex flex-col items-center gap-3 pt-2"
         >
           {/* Date Badge */}
-          <div className="w-full max-w-[260px] py-2.5 px-6 rounded-full bg-[#fcfaf5] border border-[#c69c57]/50 shadow-sm flex items-center justify-center gap-3 text-[#5a0d20] hover:border-[#c69c57] transition-all">
-            <Calendar className="w-4 h-4 text-[#74122d]" />
-            <span className="font-cinzel text-xs tracking-widest text-[#4a2e2b] font-semibold">
+          <div className="w-full max-w-[280px] py-2.5 px-6 rounded-full bg-[#fcfaf5] border border-[#c69c57]/60 shadow-xs flex items-center justify-center gap-3 text-[#5a0d20] hover:border-[#c69c57] transition-all">
+            <Calendar className="w-4 h-4 text-[#74122d] shrink-0" />
+            <span className="font-cinzel text-xs sm:text-sm tracking-widest text-[#532033] font-bold">
               {data.mainEvent.dateRangeBadge}
             </span>
           </div>
 
           {/* Location Badge */}
-          <div className="w-full max-w-[260px] py-2.5 px-6 rounded-full bg-[#fcfaf5] border border-[#c69c57]/50 shadow-sm flex items-center justify-center gap-3 text-[#5a0d20] hover:border-[#c69c57] transition-all">
-            <MapPin className="w-4 h-4 text-[#74122d]" />
-            <span className="font-cinzel text-xs tracking-widest text-[#4a2e2b] font-semibold">
+          <div className="w-full max-w-[280px] py-2.5 px-6 rounded-full bg-[#fcfaf5] border border-[#c69c57]/60 shadow-xs flex items-center justify-center gap-3 text-[#5a0d20] hover:border-[#c69c57] transition-all">
+            <MapPin className="w-4 h-4 text-[#74122d] shrink-0" />
+            <span className="font-cinzel text-xs sm:text-sm tracking-widest text-[#532033] font-bold">
               {data.mainEvent.locationBadge}
             </span>
           </div>
@@ -193,3 +193,5 @@ export const WeddingIntroduction: React.FC<WeddingIntroductionProps> = ({ data }
     </section>
   );
 };
+
+export default WeddingIntroduction;

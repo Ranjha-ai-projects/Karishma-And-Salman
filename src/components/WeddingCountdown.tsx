@@ -48,19 +48,19 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
   ];
 
   return (
-    <section className="relative w-full py-16 px-4 flex flex-col items-center text-center bg-gradient-to-b from-[#460918] via-[#5a0d20] to-[#400816] text-[#fbf8f2] overflow-hidden">
-      {/* Background Floating Golden Stardust */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 25 }).map((_, i) => (
+    <section className="relative w-full py-16 px-4 flex flex-col items-center text-center bg-gradient-to-b from-[#460918] via-[#5a0d20] to-[#400816] text-[#F8EBDD] overflow-hidden">
+      {/* Background Floating Golden Stardust (pointer-events-none, strictly non-interfering) */}
+      <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+        {Array.from({ length: 18 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full bg-amber-300"
             style={{
-              top: `${(i * 19) % 100}%`,
-              left: `${(i * 29) % 100}%`,
+              top: `${(i * 23) % 100}%`,
+              left: `${(i * 37) % 100}%`,
               width: `${(i % 3) + 1.5}px`,
               height: `${(i % 3) + 1.5}px`,
-              opacity: 0.4 + (i % 5) * 0.1,
+              opacity: 0.35 + (i % 4) * 0.1,
               boxShadow: '0 0 8px rgba(245, 210, 120, 0.8)',
               animation: `float-particle ${5 + (i % 4)}s ease-in-out infinite`,
               animationDelay: `${(i % 3)}s`
@@ -78,7 +78,7 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
           transition={{ duration: 0.7 }}
           className="space-y-1"
         >
-          <h3 className="font-cinzel text-xs tracking-[0.25em] text-[#e8ca88] uppercase font-medium">
+          <h3 className="font-cinzel text-xs sm:text-sm tracking-[0.25em] text-[#F8EBDD] uppercase font-bold">
             {data.countdown.header}
           </h3>
           <h2 className="font-script text-5xl sm:text-6xl text-[#f3dfa2] font-normal leading-tight drop-shadow-[0_2px_12px_rgba(230,190,100,0.3)]">
@@ -93,7 +93,7 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="w-full bg-[#380714]/70 border border-[#c69c57]/50 rounded-3xl p-5 sm:p-7 shadow-[0_15px_35px_rgba(20,2,6,0.5)] backdrop-blur-sm space-y-5"
+          className="w-full bg-[#380714]/75 border border-[#c69c57]/60 rounded-3xl p-5 sm:p-7 shadow-[0_15px_35px_rgba(20,2,6,0.5)] backdrop-blur-sm space-y-5"
         >
           {/* 4-column Countdown Units */}
           <div className="grid grid-cols-4 gap-2 sm:gap-4 w-full">
@@ -104,12 +104,12 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="bg-gradient-to-b from-[#4a091a]/90 to-[#2f040f]/90 border border-[#c69c57]/40 rounded-2xl py-3 sm:py-4 px-1 sm:px-2 flex flex-col items-center justify-center shadow-[inset_0_1px_1px_rgba(255,230,165,0.2),0_4px_12px_rgba(0,0,0,0.3)] hover:border-[#f3dfa2]/60 transition-colors duration-300"
+                className="bg-gradient-to-b from-[#4a091a]/95 to-[#2f040f]/95 border border-[#c69c57]/50 rounded-2xl py-3.5 sm:py-4 px-1 sm:px-2 flex flex-col items-center justify-center shadow-[inset_0_1px_1px_rgba(255,230,165,0.25),0_4px_12px_rgba(0,0,0,0.35)] hover:border-[#f3dfa2]/60 transition-colors duration-300"
               >
                 <span className="font-script text-3xl sm:text-5xl text-[#f3dfa2] leading-none tracking-normal">
                   {unit.value}
                 </span>
-                <span className="font-cinzel text-[9px] sm:text-xs tracking-widest text-[#d8ba78] uppercase mt-2">
+                <span className="font-cinzel text-[11px] sm:text-xs tracking-widest text-[#F8EBDD] font-bold uppercase mt-2">
                   {unit.label}
                 </span>
               </motion.div>
@@ -117,12 +117,12 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
           </div>
 
           {/* Footer note */}
-          <div className="flex items-center justify-center gap-2 text-xs pt-1 border-t border-[#c69c57]/20">
-            <span className="font-script text-xl sm:text-2xl text-[#f3dfa2]">
+          <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#c69c57]/30">
+            <span className="font-script text-2xl sm:text-3xl text-[#f3dfa2]">
               Until forever begins
             </span>
             <span className="text-[#c69c57]">✦</span>
-            <span className="font-serif italic text-xs sm:text-sm text-[#e8ca88]">
+            <span className="font-serif italic text-sm sm:text-base text-[#F8EBDD] font-medium">
               05 December 2026
             </span>
           </div>
@@ -131,3 +131,5 @@ export const WeddingCountdown: React.FC<WeddingCountdownProps> = ({ data }) => {
     </section>
   );
 };
+
+export default WeddingCountdown;

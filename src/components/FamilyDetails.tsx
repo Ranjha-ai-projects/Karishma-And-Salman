@@ -18,10 +18,10 @@ export const FamilyDetails: React.FC<FamilyDetailsProps> = ({ family }) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="w-full bg-[#ffffff] rounded-3xl p-8 sm:p-10 border border-[#e8ca88]/60 shadow-[0_15px_35px_rgba(90,13,32,0.06)] text-center space-y-4"
+          className="w-full bg-[#ffffff] rounded-3xl p-8 sm:p-10 border border-[#e8ca88]/70 shadow-[0_15px_35px_rgba(90,13,32,0.06)] text-center space-y-4"
         >
           {/* Header */}
-          <p className="font-cinzel text-xs tracking-[0.25em] text-[#8e6e53] uppercase font-semibold flex items-center justify-center gap-2">
+          <p className="font-cinzel text-xs sm:text-sm tracking-[0.25em] text-[#532033] uppercase font-bold flex items-center justify-center gap-2">
             <span className="text-[#c69c57]">✦</span>
             <span>{family.header}</span>
             <span className="text-[#c69c57]">✦</span>
@@ -35,11 +35,11 @@ export const FamilyDetails: React.FC<FamilyDetailsProps> = ({ family }) => {
           <GoldDivider variant="light" />
 
           {/* Family Names */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2.5 pt-2">
             {family.names.map((name, index) => (
               <p 
                 key={index}
-                className="font-serif text-lg sm:text-xl text-[#4a2e2b] font-medium tracking-wide"
+                className="font-serif text-lg sm:text-xl text-[#532033] font-semibold tracking-wide"
               >
                 {name}
               </p>
@@ -57,3 +57,5 @@ export const FamilyDetails: React.FC<FamilyDetailsProps> = ({ family }) => {
     </section>
   );
 };
+
+export default FamilyDetails;
