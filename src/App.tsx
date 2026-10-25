@@ -11,6 +11,12 @@ import { WeddingEvents } from './components/WeddingEvents';
 import { VenueDetails } from './components/VenueDetails';
 import { FamilyDetails } from './components/FamilyDetails';
 import { ThankYou } from './components/ThankYou';
+import {
+  initEnvelopeDiagnostics,
+  logEnvelopeEvent,
+  recordEnvelopeMilestone,
+  getActiveMediaQueries,
+} from './diagnostics/diagnostics';
 
 export type EntranceState = 'closed' | 'animating' | 'revealed';
 
@@ -19,7 +25,7 @@ export function App() {
   const [startMusic, setStartMusic] = useState(false);
 
   // Dev mode flag for testing replay if needed: e.g. ?dev=true or ?replay=true
-  const isDevMode = typeof window !== 'undefined' 
+  const isDevMode = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).has('dev') || new URLSearchParams(window.location.search).has('replay')
     : false;
 
@@ -36,27 +42,49 @@ export function App() {
   const headerNoteRef = useRef<HTMLDivElement | null>(null);
   const hintRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const isTriggeredRef = useRef(false);
 
   useEffect(() => {
+    initEnvelopeDiagnostics();
+    logEnvelopeEvent('entrance_state_change', { from: 'initial_mount', to: 'closed' });
+
     // Scroll to top and lock scroll during unopened envelope state
     window.scrollTo(0, 0);
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.body.style.overflow = '';
+      logEnvelopeEvent('component_unmounted', {
+        entranceState,
+        timelineProgress: timelineRef.current ? timelineRef.current.progress() : undefined,
+      });
+
       if (timelineRef.current) {
+        logEnvelopeEvent('timeline_interrupted_or_killed', {
+          reason: 'component_unmount',
+          progress: timelineRef.current.progress(),
+        });
         timelineRef.current.kill();
       }
     };
   }, []);
 
-  const isTriggeredRef = useRef(false);
-
-  const handleOpenEnvelope = () => {
+  const handleOpenEnvelope = (e?: React.SyntheticEvent) => {
     if (isTriggeredRef.current || entranceState !== 'closed') return;
     isTriggeredRef.current = true;
 
+    const eventDetails: Record<string, unknown> = {
+      eventType: e ? e.type : 'manual_call',
+    };
+    if (e && 'clientX' in e) {
+      const me = e as React.MouseEvent;
+      eventDetails.clientX = me.clientX;
+      eventDetails.clientY = me.clientY;
+    }
+    logEnvelopeEvent('emblem_tap_detected', eventDetails);
+
     setEntranceState('animating');
+    logEnvelopeEvent('entrance_state_change', { from: 'closed', to: 'animating' });
     setStartMusic(true);
 
     // Golden celebratory particles burst
@@ -86,14 +114,65 @@ export function App() {
       return;
     }
 
-    if (timelineRef.current) timelineRef.current.kill();
+    if (timelineRef.current) {
+      logEnvelopeEvent('timeline_interrupted_or_killed', {
+        reason: 'new_animation_requested',
+        progress: timelineRef.current.progress(),
+      });
+      timelineRef.current.kill();
+    }
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mediaQueries = getActiveMediaQueries();
+    const startTime = performance.now();
+    const duration = mediaQueries.prefersReducedMotion ? 0.6 : 1.6;
+
+    logEnvelopeEvent('timeline_created', {
+      duration,
+      prefersReducedMotion: mediaQueries.prefersReducedMotion,
+      viewport: mediaQueries.viewport,
+      devicePixelRatio: mediaQueries.devicePixelRatio,
+    });
+
+    let milestone0Recorded = false;
+    let milestone25Recorded = false;
+    let milestone50Recorded = false;
+    let milestone75Recorded = false;
+    let milestone100Recorded = false;
 
     // Accessible gentle fade alternative for reduced motion preference (no harsh zoom, but no instant pop)
-    if (prefersReducedMotion) {
+    if (mediaQueries.prefersReducedMotion) {
       const tl = gsap.timeline({
+        onStart: () => {
+          logEnvelopeEvent('timeline_started', { startTime: performance.now(), mode: 'reduced_motion' });
+        },
+        onUpdate: () => {
+          const prog = tl.progress();
+          if (!milestone0Recorded && prog >= 0) {
+            milestone0Recorded = true;
+            recordEnvelopeMilestone('0%', prog, startTime);
+          }
+          if (!milestone50Recorded && prog >= 0.5) {
+            milestone50Recorded = true;
+            recordEnvelopeMilestone('50%', prog, startTime);
+          }
+        },
         onComplete: () => {
+          recordEnvelopeMilestone('100%', 1.0, startTime);
+          const totalElapsedMs = Math.round(performance.now() - startTime);
+
+          logEnvelopeEvent('entrance_state_change', {
+            from: 'animating',
+            to: 'revealed',
+            mode: 'reduced_motion',
+            totalElapsedMs,
+          });
+
+          if (window.__ENVELOPE_DIAGNOSTICS__) {
+            window.__ENVELOPE_DIAGNOSTICS__.status = 'completed';
+            window.__ENVELOPE_DIAGNOSTICS__.completionTime = performance.now();
+            window.__ENVELOPE_DIAGNOSTICS__.totalDurationMs = totalElapsedMs;
+          }
+
           setEntranceState('revealed');
           document.body.style.overflow = '';
           window.scrollTo({ top: 0, behavior: 'instant' });
@@ -116,7 +195,52 @@ export function App() {
 
     // Synchronized GSAP Timeline: simultaneous zoom, backdrop dissolve, and progressive transparency
     const tl = gsap.timeline({
+      onStart: () => {
+        logEnvelopeEvent('timeline_started', { startTime: performance.now(), initialProgress: tl.progress() });
+      },
+      onUpdate: () => {
+        const prog = tl.progress();
+        if (!milestone0Recorded && prog >= 0) {
+          milestone0Recorded = true;
+          recordEnvelopeMilestone('0%', prog, startTime);
+        }
+        if (!milestone25Recorded && prog >= 0.25) {
+          milestone25Recorded = true;
+          recordEnvelopeMilestone('25%', prog, startTime);
+        }
+        if (!milestone50Recorded && prog >= 0.50) {
+          milestone50Recorded = true;
+          recordEnvelopeMilestone('50%', prog, startTime);
+        }
+        if (!milestone75Recorded && prog >= 0.75) {
+          milestone75Recorded = true;
+          recordEnvelopeMilestone('75%', prog, startTime);
+        }
+        if (!milestone100Recorded && prog >= 0.99) {
+          milestone100Recorded = true;
+          recordEnvelopeMilestone('100%', prog, startTime);
+        }
+      },
       onComplete: () => {
+        if (!milestone100Recorded) {
+          milestone100Recorded = true;
+          recordEnvelopeMilestone('100%', 1.0, startTime);
+        }
+        const totalElapsedMs = Math.round(performance.now() - startTime);
+
+        logEnvelopeEvent('entrance_state_change', {
+          from: 'animating',
+          to: 'revealed',
+          totalElapsedMs,
+        });
+
+        if (window.__ENVELOPE_DIAGNOSTICS__) {
+          window.__ENVELOPE_DIAGNOSTICS__.status = 'completed';
+          window.__ENVELOPE_DIAGNOSTICS__.completionTime = performance.now();
+          window.__ENVELOPE_DIAGNOSTICS__.totalDurationMs = totalElapsedMs;
+          window.__ENVELOPE_DIAGNOSTICS__.jumpedDirectlyToCompletion = totalElapsedMs < 300;
+        }
+
         setEntranceState('revealed');
         document.body.style.overflow = '';
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -240,7 +364,7 @@ export function App() {
           Directly begins with Arabic Bismillah and Royal Introduction (Screenshot 2)
           No intermediate burgundy screen!
       ========================================================================= */}
-      <div 
+      <div
         id="invitation-content"
         className="w-full flex flex-col items-center relative"
       >
@@ -290,8 +414,9 @@ export function App() {
           {/* 3D Perspective Scene Container */}
           <div
             ref={sceneRef}
-            className="envelope-scene"
+            className="envelope-scene cursor-pointer"
             id="scene"
+            onClick={handleOpenEnvelope}
           >
             <img
               src={coverImage}
@@ -314,7 +439,7 @@ export function App() {
               <span className="emblem-spark" aria-hidden="true" />
 
               {/* Dynamic Embossed Wax Medallion (Cleanly covers underlying 'EA' monogram with 'KS') */}
-              <div 
+              <div
                 className="relative w-[78%] h-[78%] rounded-full flex items-center justify-center pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
                 style={{
                   background: 'radial-gradient(circle at 35% 35%, #f7ecd9 0%, #ebd6bb 45%, #cfad83 80%, #b89163 100%)',
@@ -330,7 +455,7 @@ export function App() {
                 <div className="absolute bottom-[3px] text-[7px] text-[#91672e] leading-none select-none">✦</div>
 
                 {/* Dynamic Monogram Initials (e.g. KS) */}
-                <span 
+                <span
                   className="font-cinzel text-base sm:text-lg font-bold tracking-tight select-none leading-none pt-0.5"
                   style={{
                     color: '#80531a',

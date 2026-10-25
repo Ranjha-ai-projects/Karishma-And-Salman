@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { initScratchDiagnostics, logScratchEvent } from '../diagnostics/diagnostics';
 
 interface ScratchRevealProps {
   onRevealed?: () => void;
@@ -123,6 +124,7 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
   }, [drawGoldFoil, isRevealed]);
 
   useEffect(() => {
+    initScratchDiagnostics(threshold);
     initCanvas();
     const handleResize = () => {
       // Do not reset gold foil if user has already started scratching or card is revealed
@@ -132,7 +134,7 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [initCanvas, isRevealed]);
+  }, [initCanvas, isRevealed, threshold]);
 
   // Reliable completion animation
   const completeReveal = useCallback(() => {
@@ -209,7 +211,17 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     }
 
     const ratio = transparentCount / totalSamples;
+    logScratchEvent({
+      type: 'progress_check',
+      completionPercentage: Math.round(ratio * 1000) / 1000,
+    });
+
     if (ratio >= threshold) {
+      logScratchEvent({
+        type: 'reveal_triggered',
+        completionPercentage: Math.round(ratio * 1000) / 1000,
+        notes: `Threshold ${Math.round(threshold * 100)}% reached`,
+      });
       completeReveal();
     }
   }, [isRevealed, threshold, completeReveal]);
@@ -237,8 +249,21 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
+    const rect = canvas.getBoundingClientRect();
     const { x, y } = getPointerPosition(e, canvas);
     const lineWidth = 38 * (canvas.width / (canvas.clientWidth || 320));
+
+    logScratchEvent({
+      type: 'pointerdown',
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      client: { x: e.clientX, y: e.clientY },
+      canvasRelative: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      bufferCoordinates: { x, y },
+      cssDimensions: { width: rect.width, height: rect.height },
+      internalDimensions: { width: canvas.width, height: canvas.height },
+      devicePixelRatio: window.devicePixelRatio || 1,
+    });
 
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
@@ -268,9 +293,19 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
+    const rect = canvas.getBoundingClientRect();
     const { x, y } = getPointerPosition(e, canvas);
     const previous = lastPointRef.current;
     const lineWidth = 38 * (canvas.width / (canvas.clientWidth || 320));
+
+    logScratchEvent({
+      type: 'pointermove',
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      client: { x: e.clientX, y: e.clientY },
+      canvasRelative: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      bufferCoordinates: { x, y },
+    });
 
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
@@ -317,6 +352,12 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     isScratchingRef.current = false;
     lastPointRef.current = null;
 
+    logScratchEvent({
+      type: 'pointerup',
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+    });
+
     const canvas = canvasRef.current;
     if (canvas && canvas.hasPointerCapture(e.pointerId)) {
       try {
@@ -327,6 +368,16 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
     }
 
     checkScratchProgress();
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    logScratchEvent({
+      type: 'pointercancel',
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      notes: 'Browser gesture cancellation fired',
+    });
+    handlePointerUp(e);
   };
 
   return (
@@ -348,7 +399,7 @@ export const ScratchReveal: React.FC<ScratchRevealProps> = ({
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
             className={`scratch-canvas absolute inset-0 transition-opacity duration-600 ease-out ${
               isRevealed ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-grab active:cursor-grabbing'
             }`}
